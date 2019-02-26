@@ -14,7 +14,7 @@ Typical examples include the use of [REST Proxy](https://docs.confluent.io/curre
 
 ![Sample](images/sample.png)
 
-The example above shows the tracing across different Kafka topics. The first topic called `test` received a record sent by REST Proxy, which in turn had the interceptors installed. Then, the record is consumed by a stream created on KSQL, which also had the interceptors installed. Still in KSQL; multiple streams were created to copy data from/to another stream, to test if the tracing can keep up with the flow.
+The example above shows the tracing across different Kafka topics. The first topic called `test` received a record sent by REST Proxy, which in turn had the interceptors installed. Then, the record is consumed by a stream called `FIRST_STREAM` created on KSQL, which also had the interceptors installed. Still in KSQL; multiple other streams (`SECOND_STREAM`, `THIRD_STREAM`, etc) were created to copy data from/to another stream, to test if the tracing can keep up with the flow.
 
 ## Usage
 
