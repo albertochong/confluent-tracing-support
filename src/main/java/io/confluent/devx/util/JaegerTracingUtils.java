@@ -45,96 +45,6 @@ public class JaegerTracingUtils {
   public static final String TO_PREFIX = "To_";
   public static final String FROM_PREFIX = "From_";
 
-  static SpanContext extract(Headers headers, Tracer tracer) {
-
-    return tracer.extract(Format.Builtin.TEXT_MAP,
-      new CustomHeadersMapExtractAdapter(headers, false));
-
-  }
-
-  static void inject(SpanContext spanContext, Headers headers, Tracer tracer) {
-
-    tracer.inject(spanContext, Format.Builtin.TEXT_MAP,
-      new CustomHeadersMapInjectAdapter(headers, false));
-
-  }
-
-  static void injectSecond(SpanContext spanContext, Headers headers, Tracer tracer) {
-
-    tracer.inject(spanContext, Format.Builtin.TEXT_MAP,
-        new CustomHeadersMapInjectAdapter(headers, true));
-
-  }
-
-  static <K,V> Scope buildAndInjectSpan(ProducerRecord<K, V> record, Tracer tracer) {
-
-    return buildAndInjectSpan(record, tracer, ClientSpanNameProvider.PRODUCER_OPERATION_NAME);
-
-  }
-
-  static <K,V> Scope buildAndInjectSpan(ProducerRecord<K, V> record, Tracer tracer,
-                                        BiFunction<String, ProducerRecord, String> producerSpanNameProvider) {
-
-    String producerOper = TO_PREFIX + record.topic();
-    Tracer.SpanBuilder spanBuilder = tracer.buildSpan(producerSpanNameProvider.apply(producerOper, record))
-        .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_PRODUCER);
-
-    SpanContext spanContext = JaegerTracingUtils.extract(record.headers(), tracer);
-
-    if (spanContext != null) {
-      spanBuilder.asChildOf(spanContext);
-    }
-
-    Scope scope = spanBuilder.startActive(false);
-    CustomSpanDecorator.onSend(record, scope.span());
-
-    try {
-      JaegerTracingUtils.inject(scope.span().context(), record.headers(), tracer);
-    } catch (Exception e) {
-      logger.error("failed to inject span context. sending record second time?", e);
-    }
-
-    return scope;
-
-  }
-
-  static <K,V> void buildAndFinishChildSpan(ConsumerRecord<K, V> record, Tracer tracer) {
-    buildAndFinishChildSpan(record, tracer, ClientSpanNameProvider.CONSUMER_OPERATION_NAME);
-  }
-
-  static <K,V> void buildAndFinishChildSpan(ConsumerRecord<K, V> record, Tracer tracer,
-                                            BiFunction<String, ConsumerRecord, String> consumerSpanNameProvider) {
-
-    SpanContext parentContext = JaegerTracingUtils.extract(record.headers(), tracer);
-
-    if (parentContext != null) {
-
-      String consumerOper = FROM_PREFIX + record.topic();
-      Tracer.SpanBuilder spanBuilder = tracer.buildSpan(consumerSpanNameProvider.apply(consumerOper, record))
-          .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CONSUMER);
-
-      spanBuilder.asChildOf(parentContext);
-      spanBuilder.addReference(References.FOLLOWS_FROM, parentContext);
-
-      Span span = spanBuilder.start();
-      CustomSpanDecorator.onResponse(record, span);
-      span.finish();
-
-      JaegerTracingUtils.injectSecond(span.context(), record.headers(), tracer);
-
-    }
-
-  }
-
-  /**
-   * Builds a mapping between topics and tracers, so the interceptors knows
-   * which tracer to use given a topic. This mapping is important because it
-   * provides a way to cache tracers and we can avoid the time spent during
-   * tracer instantiation. Also, it is important to provide a rapid way to
-   * retrieve a tracer given the topic name, preferably using a O(1) retrieval
-   * method such as a Hashtable.
-   * 
-   */
   public static Map<String, Tracer> buildTracerMapping(String configFileName)
     throws FileNotFoundException, IOException {
 
@@ -163,6 +73,90 @@ public class JaegerTracingUtils {
     }
 
     return mapping;
+
+  }
+
+  public static <K,V> Scope buildAndInjectSpan(ProducerRecord<K, V> record, Tracer tracer) {
+
+    return buildAndInjectSpan(record, tracer, ClientSpanNameProvider.PRODUCER_OPERATION_NAME);
+
+  }
+
+  public static <K,V> Scope buildAndInjectSpan(ProducerRecord<K, V> record, Tracer tracer,
+                                        BiFunction<String, ProducerRecord, String> producerSpanNameProvider) {
+
+    String producerOper = TO_PREFIX + record.topic();
+    Tracer.SpanBuilder spanBuilder = tracer.buildSpan(producerSpanNameProvider.apply(producerOper, record))
+        .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_PRODUCER);
+
+    SpanContext spanContext = extract(record.headers(), tracer);
+
+    if (spanContext != null) {
+      spanBuilder.asChildOf(spanContext);
+    }
+
+    Scope scope = spanBuilder.startActive(false);
+    CustomSpanDecorator.onSend(record, scope.span());
+
+    try {
+      inject(scope.span().context(), record.headers(), tracer);
+    } catch (Exception ex) {
+      logger.error("failed to inject span context. sending record second time?", ex);
+    }
+
+    return scope;
+
+  }
+
+  public static <K,V> void buildAndFinishChildSpan(ConsumerRecord<K, V> record, Tracer tracer) {
+
+    buildAndFinishChildSpan(record, tracer, ClientSpanNameProvider.CONSUMER_OPERATION_NAME);
+
+  }
+
+  public static <K,V> void buildAndFinishChildSpan(ConsumerRecord<K, V> record, Tracer tracer,
+                                            BiFunction<String, ConsumerRecord, String> consumerSpanNameProvider) {
+
+    SpanContext parentContext = extract(record.headers(), tracer);
+
+    if (parentContext != null) {
+
+      String consumerOper = FROM_PREFIX + record.topic();
+      Tracer.SpanBuilder spanBuilder = tracer.buildSpan(consumerSpanNameProvider
+        .apply(consumerOper, record))
+        .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CONSUMER);
+
+      spanBuilder.asChildOf(parentContext);
+      spanBuilder.addReference(References.FOLLOWS_FROM, parentContext);
+
+      Span span = spanBuilder.start();
+      CustomSpanDecorator.onResponse(record, span);
+      span.finish();
+
+      injectSecond(span.context(), record.headers(), tracer);
+
+    }
+
+  }
+
+  private static SpanContext extract(Headers headers, Tracer tracer) {
+
+    return tracer.extract(Format.Builtin.TEXT_MAP,
+      new CustomHeadersMapExtractAdapter(headers, false));
+
+  }
+
+  private static void inject(SpanContext spanContext, Headers headers, Tracer tracer) {
+
+    tracer.inject(spanContext, Format.Builtin.TEXT_MAP,
+      new CustomHeadersMapInjectAdapter(headers, false));
+
+  }
+
+  private static void injectSecond(SpanContext spanContext, Headers headers, Tracer tracer) {
+
+    tracer.inject(spanContext, Format.Builtin.TEXT_MAP,
+        new CustomHeadersMapInjectAdapter(headers, true));
 
   }
 
@@ -236,14 +230,13 @@ public class JaegerTracingUtils {
       for (int i = 0; i < svcs.size(); i++) {
 
         JsonObject svc = svcs.get(i).getAsJsonObject();
-
         String serviceName = svc.get("service").getAsString();
         JsonObject configJson = svc.getAsJsonObject("config");
         Configuration config = getConfig(serviceName, configJson);
         JsonArray topicsArray = svc.getAsJsonArray("topics");
         List<String> topics = getTopics(topicsArray);
 
-        services.add(new Service(serviceName, config, topics));
+        services.add(new Service(config, topics));
 
       }
 
@@ -256,8 +249,6 @@ public class JaegerTracingUtils {
   private static Configuration getConfig(String serviceName, JsonObject configJson) {
 
     if (configJson == null) {
-
-      // If nothing was provided, then create a default one...
 
       SamplerConfiguration samplerConfig =
         SamplerConfiguration.fromEnv()
@@ -335,35 +326,20 @@ public class JaegerTracingUtils {
 
   private static class Service {
 
-    private String serviceName;
     private Configuration config;
     private List<String> topics;
 
-    public Service(String serviceName, Configuration config,
-      List<String> topics) {
-
-        this.serviceName = serviceName;
+    public Service(Configuration config, List<String> topics) {
         this.config = config;
         this.topics = topics;
-
-    }
-
-    public String getServiceName() {
-
-      return this.serviceName;
-
     }
 
     public Configuration getConfig() {
-
       return this.config;
-
     }
 
     public List<String> getTopics() {
-
       return this.topics;
-
     }
 
   }
