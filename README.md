@@ -8,7 +8,7 @@ Interceptors-based approach to implement distributed tracing using Jaeger
 
 ## Overview
 
-The interceptors from the [OpenTracing Apache Kafka Client project](https://github.com/opentracing-contrib/java-kafka-client) are great implementations to use with Java-based applications where you own the code and are able to instantiate your own tracers and make them available throughout the JVM. However, there are situations in which records will be produced and consumed from JVMs that are automatically created for you; and you don't have any way to instantiate your own tracers because its source-code is not available, or maybe it is but you are not allowed to change it.
+The interceptors from the [OpenTracing Apache Kafka Client project](https://github.com/opentracing-contrib/java-kafka-client) are great implementations to use with Java-based applications where you own the code and are able to instantiate your own tracers and make them available throughout the JVM. However; there are situations in which records will be produced and consumed from JVMs that are automatically created for you, and you don't have any way to instantiate your own tracers because its source-code is not available. Or maybe it is... but you are not allowed to change it.
 
 Typical examples include the use of [REST Proxy](https://docs.confluent.io/current/kafka-rest/docs/index.html), [Kafka Connect](https://docs.confluent.io/current/connect/index.html), and [Confluent's KSQL Servers](https://docs.confluent.io/current/ksql/docs/index.html). In this technologies, the JVMs are automatically created by pre-defined scripts and you would need a special type of interceptor, one that can instantiate their own tracers based on configuration specified in an external file. For this particular situation, you can use the Jaeger Tracing support provided by this project.
 
@@ -108,6 +108,12 @@ These are the dependencies that you will need to install in your classpath along
 <dependency>
     <groupId>io.jaegertracing</groupId>
     <artifactId>jaeger-core</artifactId>
+    <version>VERSION</version>
+</dependency>
+
+<dependency>
+    <groupId>io.opentracing</groupId>
+    <artifactId>opentracing-noop</artifactId>
     <version>VERSION</version>
 </dependency>
 

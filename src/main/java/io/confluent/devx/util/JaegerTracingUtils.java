@@ -66,10 +66,6 @@ public class JaegerTracingUtils {
 
       }
 
-    } else {
-
-      throw new FileNotFoundException("The file '" + configFileName + "' does not exist.");
-
     }
 
     return mapping;
@@ -250,20 +246,9 @@ public class JaegerTracingUtils {
 
     if (configJson == null) {
 
-      SamplerConfiguration samplerConfig =
-        SamplerConfiguration.fromEnv()
-        .withType("const").withParam(1);
-
-      ReporterConfiguration reporterConfig =
-        ReporterConfiguration.fromEnv()
-        .withLogSpans(true);
-
-      Configuration config =
-        new Configuration(serviceName)
-        .withSampler(samplerConfig)
-        .withReporter(reporterConfig);
-
-      return config;
+      return new Configuration(serviceName)
+        .withSampler(SamplerConfiguration.fromEnv())
+        .withReporter(ReporterConfiguration.fromEnv());
 
     }
 
@@ -278,9 +263,9 @@ public class JaegerTracingUtils {
       JsonElement paramEle = sampler.get("param");
       samplerConfig.withParam(paramEle != null ? paramEle.getAsDouble() : 1);
 
-    } else {
-
-      samplerConfig.withType("const").withParam(1);
+      JsonElement mgmrHostPortEle = sampler.get("managerHostPort");
+      samplerConfig.withManagerHostPort(mgmrHostPortEle != null ?
+        mgmrHostPortEle.getAsString() : null);
 
     }
 
@@ -290,7 +275,8 @@ public class JaegerTracingUtils {
     if (reporter != null) {
 
       JsonElement logSpansEle = reporter.get("logSpans");
-      reporterConfig.withLogSpans(logSpansEle != null ? logSpansEle.getAsBoolean() : true);
+      reporterConfig.withLogSpans(logSpansEle != null ?
+        logSpansEle.getAsBoolean() : true);
 
       JsonElement flushIntervalMsEle = reporter.get("flushIntervalMs");
       reporterConfig.withFlushInterval(flushIntervalMsEle != null ?
@@ -299,6 +285,42 @@ public class JaegerTracingUtils {
       JsonElement maxQueueSizeEle = reporter.get("maxQueueSize");
       reporterConfig.withMaxQueueSize(maxQueueSizeEle != null ?
         maxQueueSizeEle.getAsInt() : RemoteReporter.DEFAULT_MAX_QUEUE_SIZE);
+
+      JsonObject sender = reporter.getAsJsonObject("sender");
+
+      if (sender != null) {
+
+        JsonElement agentHostEle = reporter.get("agentHost");
+        reporterConfig.getSenderConfiguration()
+          .withAgentHost(agentHostEle != null ?
+          agentHostEle.getAsString() : null);
+
+        JsonElement agentPortEle = reporter.get("agentPort");
+        reporterConfig.getSenderConfiguration()
+          .withAgentPort(agentPortEle != null ?
+          agentPortEle.getAsInt() : 0);
+
+        JsonElement endpointEle = reporter.get("endpoint");
+        reporterConfig.getSenderConfiguration()
+          .withEndpoint(endpointEle != null ?
+          endpointEle.getAsString() : null);
+
+        JsonElement authTokenEle = reporter.get("authToken");
+        reporterConfig.getSenderConfiguration()
+          .withAuthToken(authTokenEle != null ?
+          authTokenEle.getAsString() : null);
+
+        JsonElement authUsernameEle = reporter.get("authUsername");
+        reporterConfig.getSenderConfiguration()
+          .withAuthUsername(authUsernameEle != null ?
+          authUsernameEle.getAsString() : null);
+
+        JsonElement authPasswordEle = reporter.get("authPassword");
+        reporterConfig.getSenderConfiguration()
+          .withAuthPassword(authPasswordEle != null ?
+          authPasswordEle.getAsString() : null);
+
+      }
 
     }
 
