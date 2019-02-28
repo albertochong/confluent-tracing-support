@@ -8,9 +8,9 @@ Interceptors-based approach to implement distributed tracing using Jaeger
 
 ## Overview
 
-The interceptors from the [OpenTracing Apache Kafka Client project](https://github.com/opentracing-contrib/java-kafka-client) are great implementations to use with Java-based applications where you own the code and are able to instantiate your own tracers and make them available throughout the JVM. However; there are situations in which records will be produced and consumed from JVMs that are automatically created for you, and you don't have any way to instantiate your own tracers because its source-code is not available. Or maybe it is... but you are not allowed to change it.
+The interceptors from the [OpenTracing Apache Kafka Client project](https://github.com/opentracing-contrib/java-kafka-client) are great implementations to use with Java-based applications where you own the code and are able to instantiate your own tracers and make them available throughout the JVM. However, there are situations in which records will be produced and consumed from JVMs that are automatically created for you, and you don't have any way to instantiate your own tracers because its source-code is not available. Or maybe it is, but you are not allowed to change it.
 
-Typical examples include the use of [REST Proxy](https://docs.confluent.io/current/kafka-rest/docs/index.html), [Kafka Connect](https://docs.confluent.io/current/connect/index.html), and [Confluent's KSQL Servers](https://docs.confluent.io/current/ksql/docs/index.html). In this technologies, the JVMs are automatically created by pre-defined scripts and you would need a special type of interceptor, one that can instantiate their own tracers based on configuration specified in an external file. For this particular situation, you can use the Jaeger Tracing support provided by this project.
+Typical examples include the use of [Schema Registry](https://docs.confluent.io/current/schema-registry/docs/index.html), [REST Proxy](https://docs.confluent.io/current/kafka-rest/docs/index.html), [Kafka Connect](https://docs.confluent.io/current/connect/index.html), and [KSQL Servers](https://docs.confluent.io/current/ksql/docs/index.html). In these technologies, the JVMs are automatically created by pre-defined scripts and you would need a special type of interceptor -- one that can instantiate their own tracers based on configuration specified in an external file. For this particular situation, you can use the Jaeger Tracing support provided by this project.
 
 ![Sample](images/sample.png)
 
@@ -30,13 +30,25 @@ auto.offset.reset=earliest
 producer.interceptor.classes=io.confluent.devx.util.JaegerTracingProducerInterceptor
 consumer.interceptor.classes=io.confluent.devx.util.JaegerTracingConsumerInterceptor
 
+############################################################################################
+```
+
+### Customizing the Interceptors Behavior
+
+If you plan to have multiple services deployed in a single JVM, then it is a best practice to clearly separate the services according to the topics that they use. Each service will have a set of topics they will operate, so it doesn't make any sense of having a single tracer for all of them. The good news is that you can solve this problem by specifying a JSON configuration file that details the relationship between services and topics, as well as the details of each tracer. This JSON configuration file can be specified using the property `jaeger.tracing.interceptors.config.file`, as shown below.
+
+```java
+############################## Jaeger Tracing Configuration ################################
+
+producer.interceptor.classes=io.confluent.devx.util.JaegerTracingProducerInterceptor
+consumer.interceptor.classes=io.confluent.devx.util.JaegerTracingConsumerInterceptor
+
 jaeger.tracing.interceptors.config.file=interceptorsConfig.json
 
 ############################################################################################
 ```
-Note that we provided a JSON configuration file via the property `jaeger.tracing.interceptors.config.file`. This file contains the definition of all services that need to be traced, as well as the configuration of the tracer for each service. This is important because the JVM could be used to host multiple services at a time, each one belonging to a different domain. Since each service will probably use different Kafka topics to implement their processing logic, this file helps in keeping a mapping between services and topics so the tracing is executed separately for each service.
 
-Here is an example:
+Here is an example of the JSON configuration file:
 
 ```json
 {
@@ -77,6 +89,12 @@ Here is an example:
 }
 ```
 In the example above, two services were defined, `CustomerService` and `ProductService` respectively. In runtime, it will be created one tracer for each one of these services. However, every time a record is either produced or consumed for topic `Topic-1`, the interceptor knows that it should use the tracer associated for `CustomerService`, as well as every time a record is either produced or consumed for topic `Topic-4`, the interceptor knows that it should use the tracer associated for `ProductService`.
+
+You can also use the JSON configuration file to customize the behavior of each tracer. This is particularly important if you want to fine-tune how the tracer behaves in terms of emitting traces, how it handles logs and also the details of the samplers and the reporters. Finally, you may also use the JSON configuration file to change the way traces are sent to the collectors, switching from Thrift UDP packages to plain HTTP requests.
+
+If you don't specify an JSON configuration file via the property `jaeger.tracing.interceptors.config.file`, then a generic tracer will be created, and it will have the following service name: `JaegerTracingUtils`. This tracer will be shared between all interceptors, and it will be applied for every topic that is used within the JVM.
+
+## Dependencies
 
 These are the dependencies that you will need to install in your classpath along with the interceptors:
 
