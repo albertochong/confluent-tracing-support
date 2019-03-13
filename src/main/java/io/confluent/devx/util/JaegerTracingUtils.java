@@ -41,7 +41,7 @@ public class JaegerTracingUtils {
 
   private static final Logger logger = LoggerFactory.getLogger(JaegerTracingUtils.class);
 
-  public static final String CONFIG_FILE_PROP = "jaeger.tracing.interceptors.config.file";
+  public static final String INTERCEPTORS_CONFIG_FILE = "INTERCEPTORS_CONFIG_FILE";
   public static final String TO_PREFIX = "To_";
   public static final String FROM_PREFIX = "From_";
 

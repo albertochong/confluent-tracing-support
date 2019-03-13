@@ -43,12 +43,12 @@ public class JaegerTracingProducerInterceptor<K, V> implements ProducerIntercept
   @Override
   public void configure(Map<String, ?> configs) {
 
-    if (configs.containsKey(JaegerTracingUtils.CONFIG_FILE_PROP)) {
+    String interceptorsConfigFile = System.getenv(JaegerTracingUtils.INTERCEPTORS_CONFIG_FILE);
 
-      String configFileName = (String) configs.get(JaegerTracingUtils.CONFIG_FILE_PROP);
+    if (interceptorsConfigFile != null) {
 
       try {
-        tracerMapping = JaegerTracingUtils.buildTracerMapping(configFileName);
+        tracerMapping = JaegerTracingUtils.buildTracerMapping(interceptorsConfigFile);
       } catch (IOException ioe) {
         ioe.printStackTrace();
       }
