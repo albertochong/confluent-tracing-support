@@ -35,17 +35,10 @@ consumer.interceptor.classes=io.confluent.devx.util.JaegerTracingConsumerInterce
 
 ### Customizing the Interceptors Behavior
 
-If you plan to have multiple services deployed in a single JVM, then it is a best practice to clearly separate the services according to the topics that they use. Each service will have a set of topics they will operate, so it doesn't make any sense of having a single tracer for all of them. The good news is that you can solve this problem by specifying a JSON configuration file that details the relationship between services and topics, as well as the details of each tracer. This JSON configuration file can be specified using the property `jaeger.tracing.interceptors.config.file`, as shown below.
+If you plan to have multiple services deployed in a single JVM, then it is a best practice to clearly separate the services according to the topics that they use. Each service will have a set of topics they will operate, so it doesn't make any sense of having a single tracer for all of them. The good news is that you can solve this problem by specifying a JSON configuration file that details the relationship between services and topics, as well as the details of each tracer. This JSON configuration file can be specified using the environment variable `INTERCEPTORS_CONFIG_FILE`, as shown below.
 
-```java
-############################## Jaeger Tracing Configuration ################################
-
-producer.interceptor.classes=io.confluent.devx.util.JaegerTracingProducerInterceptor
-consumer.interceptor.classes=io.confluent.devx.util.JaegerTracingConsumerInterceptor
-
-jaeger.tracing.interceptors.config.file=interceptorsConfig.json
-
-############################################################################################
+```bash
+export INTERCEPTORS_CONFIG_FILE=/etc/jaeger/ext/interceptorsConfig.json
 ```
 
 Here is an example of the JSON configuration file:
@@ -92,7 +85,7 @@ In the example above, two services were defined, `CustomerService` and `ProductS
 
 You can also use the JSON configuration file to customize the behavior of each tracer. This is particularly important if you want to fine-tune how the tracer behaves in terms of emitting traces, how it handles logs and also the details of the samplers and the reporters. Finally, you may also use the JSON configuration file to change the way traces are sent to the collectors, switching from Thrift UDP packages to plain HTTP requests.
 
-If you don't specify an JSON configuration file via the property `jaeger.tracing.interceptors.config.file`, then a generic tracer will be created, and it will have the following service name: `JaegerTracingUtils`. This tracer will be shared between all interceptors, and it will be applied for every topic that is used within the JVM.
+If you don't specify an JSON configuration file via the environment variable `INTERCEPTORS_CONFIG_FILE`, then a generic tracer will be created, and it will have the following service name: `JaegerTracingUtils`. This tracer will be shared between all interceptors, and it will be applied for every topic that is used within the JVM.
 
 ## Dependencies
 
