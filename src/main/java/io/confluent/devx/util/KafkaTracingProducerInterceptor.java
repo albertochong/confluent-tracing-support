@@ -11,7 +11,7 @@ import org.apache.kafka.clients.producer.ProducerInterceptor;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
-public class JaegerTracingProducerInterceptor<K, V> implements ProducerInterceptor<K, V> {
+public class KafkaTracingProducerInterceptor<K, V> implements ProducerInterceptor<K, V> {
 
   private Map<String, Tracer> tracerMapping;
 
@@ -21,7 +21,7 @@ public class JaegerTracingProducerInterceptor<K, V> implements ProducerIntercept
     Tracer tracer = getTracer(record.topic());
     System.out.println("-------------------------> " + tracer);
 
-    JaegerTracingUtils.buildAndInjectSpan(record, tracer).finish();
+    KafkaTracingUtils.buildAndInjectSpan(record, tracer).finish();
     return record;
 
   }
@@ -38,12 +38,12 @@ public class JaegerTracingProducerInterceptor<K, V> implements ProducerIntercept
   @Override
   public void configure(Map<String, ?> configs) {
 
-    String interceptorsConfigFile = System.getenv(JaegerTracingUtils.INTERCEPTORS_CONFIG_FILE);
+    String interceptorsConfigFile = System.getenv(KafkaTracingUtils.INTERCEPTORS_CONFIG_FILE);
 
     if (interceptorsConfigFile != null) {
 
       try {
-        tracerMapping = JaegerTracingUtils.buildTracerMapping(interceptorsConfigFile);
+        tracerMapping = KafkaTracingUtils.buildTracerMapping(interceptorsConfigFile);
       } catch (IOException ioe) {
         ioe.printStackTrace();
       }

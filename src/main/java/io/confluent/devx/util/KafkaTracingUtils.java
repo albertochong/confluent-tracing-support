@@ -36,9 +36,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class JaegerTracingUtils {
+public class KafkaTracingUtils {
 
-  private static final Logger logger = LoggerFactory.getLogger(JaegerTracingUtils.class);
+  private static final Logger logger = LoggerFactory.getLogger(KafkaTracingUtils.class);
 
   public static final String INTERCEPTORS_CONFIG_FILE = "INTERCEPTORS_CONFIG_FILE";
   public static final String TO_PREFIX = "To_";

@@ -12,7 +12,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 
-public class JaegerTracingConsumerInterceptor<K, V> implements ConsumerInterceptor<K, V> {
+public class KafkaTracingConsumerInterceptor<K, V> implements ConsumerInterceptor<K, V> {
 
   private Map<String, Tracer> tracerMapping;
 
@@ -23,7 +23,7 @@ public class JaegerTracingConsumerInterceptor<K, V> implements ConsumerIntercept
 
       Tracer tracer = getTracer(record.topic());
       System.out.println("-------------------------> " + tracer);
-      JaegerTracingUtils.buildAndFinishChildSpan(record, tracer);
+      KafkaTracingUtils.buildAndFinishChildSpan(record, tracer);
 
     }
 
@@ -44,12 +44,12 @@ public class JaegerTracingConsumerInterceptor<K, V> implements ConsumerIntercept
   @Override
   public void configure(Map<String, ?> configs) {
 
-    String interceptorsConfigFile = System.getenv(JaegerTracingUtils.INTERCEPTORS_CONFIG_FILE);
+    String interceptorsConfigFile = System.getenv(KafkaTracingUtils.INTERCEPTORS_CONFIG_FILE);
 
     if (interceptorsConfigFile != null) {
 
       try {
-        tracerMapping = JaegerTracingUtils.buildTracerMapping(interceptorsConfigFile);
+        tracerMapping = KafkaTracingUtils.buildTracerMapping(interceptorsConfigFile);
       } catch (IOException ioe) {
         ioe.printStackTrace();
       }
