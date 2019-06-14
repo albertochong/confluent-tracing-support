@@ -1,10 +1,9 @@
 package io.confluent.devx.util;
 
-import io.jaegertracing.Configuration;
-import io.jaegertracing.Configuration.ReporterConfiguration;
-import io.jaegertracing.Configuration.SamplerConfiguration;
 import io.opentracing.Scope;
+import io.opentracing.Span;
 import io.opentracing.Tracer;
+import io.opentracing.contrib.tracerresolver.TracerResolver;
 import io.opentracing.util.GlobalTracer;
 
 import java.io.IOException;
@@ -22,11 +21,9 @@ public class JaegerTracingProducerInterceptor<K, V> implements ProducerIntercept
   public ProducerRecord<K, V> onSend(ProducerRecord<K, V> record) {
 
     Tracer tracer = getTracer(record.topic());
+    System.out.println("-------------------------> " + tracer);
 
-    try (Scope scope = JaegerTracingUtils.buildAndInjectSpan(record, tracer)) {
-      scope.span().finish();
-    }
-
+    JaegerTracingUtils.buildAndInjectSpan(record, tracer).finish();
     return record;
 
   }
@@ -57,10 +54,11 @@ public class JaegerTracingProducerInterceptor<K, V> implements ProducerIntercept
 
       if (!GlobalTracer.isRegistered()) {
 
-        GlobalTracer.register(new Configuration(
-          JaegerTracingUtils.class.getSimpleName())
-            .withSampler(SamplerConfiguration.fromEnv().withType("const").withParam(1))
-            .withReporter(ReporterConfiguration.fromEnv().withLogSpans(true)).getTracer());
+        Tracer tracer = TracerResolver.resolveTracer();
+
+        if (tracer != null) {
+          GlobalTracer.register(tracer);
+        }
 
       }
 

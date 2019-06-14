@@ -5,7 +5,6 @@ import io.jaegertracing.Configuration.ReporterConfiguration;
 import io.jaegertracing.Configuration.SamplerConfiguration;
 import io.jaegertracing.internal.reporters.RemoteReporter;
 import io.opentracing.References;
-import io.opentracing.Scope;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
@@ -72,13 +71,13 @@ public class JaegerTracingUtils {
 
   }
 
-  public static <K,V> Scope buildAndInjectSpan(ProducerRecord<K, V> record, Tracer tracer) {
+  public static <K,V> Span buildAndInjectSpan(ProducerRecord<K, V> record, Tracer tracer) {
 
     return buildAndInjectSpan(record, tracer, ClientSpanNameProvider.PRODUCER_OPERATION_NAME);
 
   }
 
-  public static <K,V> Scope buildAndInjectSpan(ProducerRecord<K, V> record, Tracer tracer,
+  public static <K,V> Span buildAndInjectSpan(ProducerRecord<K, V> record, Tracer tracer,
                                         BiFunction<String, ProducerRecord, String> producerSpanNameProvider) {
 
     String producerOper = TO_PREFIX + record.topic();
@@ -91,16 +90,16 @@ public class JaegerTracingUtils {
       spanBuilder.asChildOf(spanContext);
     }
 
-    Scope scope = spanBuilder.startActive(false);
-    CustomSpanDecorator.onSend(record, scope.span());
+    Span span = spanBuilder.start();
+    CustomSpanDecorator.onSend(record, span);
 
     try {
-      inject(scope.span().context(), record.headers(), tracer);
+      inject(span.context(), record.headers(), tracer);
     } catch (Exception ex) {
       logger.error("failed to inject span context. sending record second time?", ex);
     }
 
-    return scope;
+    return span;
 
   }
 

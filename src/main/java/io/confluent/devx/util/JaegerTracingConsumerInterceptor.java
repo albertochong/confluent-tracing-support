@@ -1,9 +1,7 @@
 package io.confluent.devx.util;
 
-import io.jaegertracing.Configuration;
-import io.jaegertracing.Configuration.ReporterConfiguration;
-import io.jaegertracing.Configuration.SamplerConfiguration;
 import io.opentracing.Tracer;
+import io.opentracing.contrib.tracerresolver.TracerResolver;
 import io.opentracing.util.GlobalTracer;
 
 import java.io.IOException;
@@ -24,6 +22,7 @@ public class JaegerTracingConsumerInterceptor<K, V> implements ConsumerIntercept
     for (ConsumerRecord<K, V> record : records) {
 
       Tracer tracer = getTracer(record.topic());
+      System.out.println("-------------------------> " + tracer);
       JaegerTracingUtils.buildAndFinishChildSpan(record, tracer);
 
     }
@@ -59,10 +58,11 @@ public class JaegerTracingConsumerInterceptor<K, V> implements ConsumerIntercept
 
       if (!GlobalTracer.isRegistered()) {
 
-        GlobalTracer.register(new Configuration(
-          JaegerTracingUtils.class.getSimpleName())
-            .withSampler(SamplerConfiguration.fromEnv().withType("const").withParam(1))
-            .withReporter(ReporterConfiguration.fromEnv().withLogSpans(true)).getTracer());
+        Tracer tracer = TracerResolver.resolveTracer();
+
+        if (tracer != null) {
+          GlobalTracer.register(tracer);
+        }
 
       }
 
