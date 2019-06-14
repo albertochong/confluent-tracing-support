@@ -1,5 +1,5 @@
-# Jaeger Tracing Support for REST Proxy, Connect and KSQL
-Interceptors-based approach to implement distributed tracing using Jaeger
+# Apache Kafka Tracing Support for REST Proxy, Connect and KSQL
+Interceptors-based approach to implement distributed tracing in Apache Kafka technologies
 
 ## Requirements
 
@@ -32,6 +32,8 @@ consumer.interceptor.classes=io.confluent.devx.util.JaegerTracingConsumerInterce
 
 ############################################################################################
 ```
+
+By default, the interceptors will leverage any tracers registered using an [TracerResolver](https://github.com/opentracing-contrib/java-tracerresolver). Using this technique allows the interceptors to be tracer agonostic, and you are free to use any tracer that you are comfortable with.
 
 ### Customizing the Interceptors Behavior
 
@@ -85,7 +87,7 @@ In the example above, two services were defined, `CustomerService` and `ProductS
 
 You can also use the JSON configuration file to customize the behavior of each tracer. This is particularly important if you want to fine-tune how the tracer behaves in terms of emitting traces, how it handles logs and also the details of the samplers and the reporters. Finally, you may also use the JSON configuration file to change the way traces are sent to the collectors, switching from Thrift UDP packages to plain HTTP requests.
 
-If you don't specify an JSON configuration file via the environment variable `INTERCEPTORS_CONFIG_FILE`, then a generic tracer will be created, and it will have the following service name: `JaegerTracingUtils`. This tracer will be shared between all interceptors, and it will be applied for every topic that is used within the JVM.
+Please keep in mind that this feature of customizing the interceptor behavior using a configuration file requires the usage of Jaeger as distributed tracing technology. Support for other tracers may be added in the future though.
 
 ## Dependencies
 
@@ -108,7 +110,13 @@ These are the dependencies that you will need to install in your classpath along
     <groupId>io.opentracing.contrib</groupId>
     <artifactId>opentracing-kafka-client</artifactId>
     <version>VERSION</version>
-</dependency>    
+</dependency>
+
+<dependency>
+   <groupId>io.opentracing.contrib</groupId>
+   <artifactId>opentracing-tracerresolver</artifactId>
+   <version>VERSION</version>
+</dependency>
 
 <dependency>
     <groupId>io.jaegertracing</groupId>
@@ -138,6 +146,12 @@ These are the dependencies that you will need to install in your classpath along
     <groupId>org.apache.thrift</groupId>
     <artifactId>libthrift</artifactId>
     <version>VERSION</version>
+</dependency>
+
+<dependency>
+   <groupId>com.google.code.gson</groupId>
+   <artifactId>gson</artifactId>
+   <version>VERSION</version>
 </dependency>
 ```
 
