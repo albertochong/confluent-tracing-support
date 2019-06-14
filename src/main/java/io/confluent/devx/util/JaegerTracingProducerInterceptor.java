@@ -1,7 +1,5 @@
 package io.confluent.devx.util;
 
-import io.opentracing.Scope;
-import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.tracerresolver.TracerResolver;
 import io.opentracing.util.GlobalTracer;
@@ -52,15 +50,8 @@ public class JaegerTracingProducerInterceptor<K, V> implements ProducerIntercept
  
     } else {
 
-      if (!GlobalTracer.isRegistered()) {
-
-        Tracer tracer = TracerResolver.resolveTracer();
-
-        if (tracer != null) {
-          GlobalTracer.register(tracer);
-        }
-
-      }
+      Tracer tracer = TracerResolver.resolveTracer();
+      GlobalTracer.registerIfAbsent(tracer);
 
     }
 

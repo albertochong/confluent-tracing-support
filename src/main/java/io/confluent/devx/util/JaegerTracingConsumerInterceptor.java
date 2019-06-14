@@ -56,15 +56,8 @@ public class JaegerTracingConsumerInterceptor<K, V> implements ConsumerIntercept
  
     } else {
 
-      if (!GlobalTracer.isRegistered()) {
-
-        Tracer tracer = TracerResolver.resolveTracer();
-
-        if (tracer != null) {
-          GlobalTracer.register(tracer);
-        }
-
-      }
+      Tracer tracer = TracerResolver.resolveTracer();
+      GlobalTracer.registerIfAbsent(tracer);
 
     }
 
