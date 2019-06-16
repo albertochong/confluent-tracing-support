@@ -27,8 +27,8 @@ auto.offset.reset=earliest
 
 ############################## Jaeger Tracing Configuration ################################
 
-producer.interceptor.classes=io.confluent.devx.util.JaegerTracingProducerInterceptor
-consumer.interceptor.classes=io.confluent.devx.util.JaegerTracingConsumerInterceptor
+producer.interceptor.classes=io.confluent.devx.util.KafkaTracingProducerInterceptor
+consumer.interceptor.classes=io.confluent.devx.util.KafkaTracingConsumerInterceptor
 
 ############################################################################################
 ```
