@@ -22,7 +22,6 @@ public class KafkaTracingConsumerInterceptor<K, V> implements ConsumerIntercepto
     for (ConsumerRecord<K, V> record : records) {
 
       Tracer tracer = getTracer(record.topic());
-      System.out.println("-------------------------> " + tracer);
       KafkaTracingUtils.buildAndFinishChildSpan(record, tracer);
 
     }
@@ -57,6 +56,7 @@ public class KafkaTracingConsumerInterceptor<K, V> implements ConsumerIntercepto
     } else {
 
       Tracer tracer = TracerResolver.resolveTracer();
+      System.out.println("-------------> " + tracer);
       GlobalTracer.registerIfAbsent(tracer);
 
     }

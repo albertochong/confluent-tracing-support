@@ -19,9 +19,8 @@ public class KafkaTracingProducerInterceptor<K, V> implements ProducerIntercepto
   public ProducerRecord<K, V> onSend(ProducerRecord<K, V> record) {
 
     Tracer tracer = getTracer(record.topic());
-    System.out.println("-------------------------> " + tracer);
-
     KafkaTracingUtils.buildAndInjectSpan(record, tracer).finish();
+
     return record;
 
   }
@@ -51,6 +50,7 @@ public class KafkaTracingProducerInterceptor<K, V> implements ProducerIntercepto
     } else {
 
       Tracer tracer = TracerResolver.resolveTracer();
+      System.out.println("-------------> " + tracer);
       GlobalTracer.registerIfAbsent(tracer);
 
     }
