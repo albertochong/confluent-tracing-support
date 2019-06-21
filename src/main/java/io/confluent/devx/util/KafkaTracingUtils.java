@@ -121,7 +121,7 @@ public class KafkaTracingUtils {
         .apply(consumerOper, record))
         .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CONSUMER);
 
-      spanBuilder.asChildOf(parentContext);
+      //spanBuilder.asChildOf(parentContext);
       spanBuilder.addReference(References.FOLLOWS_FROM, parentContext);
 
       Span span = spanBuilder.start();
