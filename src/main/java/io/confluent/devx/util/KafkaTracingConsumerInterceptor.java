@@ -14,6 +14,8 @@ import org.apache.kafka.common.TopicPartition;
 
 public class KafkaTracingConsumerInterceptor<K, V> implements ConsumerInterceptor<K, V> {
 
+  private String ksqlServiceId;
+  private boolean allowKsqlInternalTopics;
   private Map<String, Tracer> tracerMapping;
 
   @Override
@@ -21,8 +23,18 @@ public class KafkaTracingConsumerInterceptor<K, V> implements ConsumerIntercepto
 
     for (ConsumerRecord<K, V> record : records) {
 
-      Tracer tracer = getTracer(record.topic());
-      KafkaTracingUtils.buildAndFinishChildSpan(record, tracer);
+      String topic = record.topic();
+      Tracer tracer = getTracer(topic);
+
+      if (KafkaTracingUtils.isInternalTopic(topic, ksqlServiceId)) {
+
+        if (allowKsqlInternalTopics) {
+          KafkaTracingUtils.buildAndFinishChildSpan(record, tracer);
+        }
+  
+      } else {
+        KafkaTracingUtils.buildAndFinishChildSpan(record, tracer);
+      }
 
     }
 
@@ -42,6 +54,14 @@ public class KafkaTracingConsumerInterceptor<K, V> implements ConsumerIntercepto
 
   @Override
   public void configure(Map<String, ?> configs) {
+
+    String _allowKsqlInternalTopics = System.getenv(KafkaTracingUtils.ALLOW_KSQL_INTERNAL_TOPICS);
+    allowKsqlInternalTopics = Boolean.parseBoolean(_allowKsqlInternalTopics);
+    ksqlServiceId = (String) configs.get(KafkaTracingUtils.KSQL_SERVICE_ID_PARAM);
+
+    if (ksqlServiceId == null) {
+      ksqlServiceId = KafkaTracingUtils.KSQL_SERVICE_ID_DEFAULT;
+    }
 
     String interceptorsConfigFile = System.getenv(KafkaTracingUtils.INTERCEPTORS_CONFIG_FILE);
 
