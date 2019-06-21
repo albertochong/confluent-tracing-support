@@ -40,8 +40,6 @@ public class KafkaTracingUtils {
 
   private static final Logger logger = LoggerFactory.getLogger(KafkaTracingUtils.class);
 
-  public static final String KSQL_SERVICE_ID_PARAM = "ksql.service.id";
-  public static final String KSQL_SERVICE_ID_DEFAULT = "default_";
   public static final String CONFLUENT_KSQL_PREFIX = "_confluent-ksql-";
   public static final String ALLOW_KSQL_INTERNAL_TOPICS = "ALLOW_KSQL_INTERNAL_TOPICS";
 
@@ -49,9 +47,8 @@ public class KafkaTracingUtils {
   public static final String TO_PREFIX = "To_";
   public static final String FROM_PREFIX = "From_";
 
-  public static boolean isInternalTopic(String topic, String ksqlServiceId) {
-    System.out.println("----------> isInternalTopic() Topic:" + topic + ",    Flag: " + CONFLUENT_KSQL_PREFIX + ksqlServiceId);
-    return topic.indexOf(CONFLUENT_KSQL_PREFIX + ksqlServiceId) >= 0;
+  public static boolean isInternalTopic(String topic) {
+    return topic.indexOf(CONFLUENT_KSQL_PREFIX) >= 0;
   }
 
   public static Map<String, Tracer> buildTracerMapping(String configFileName)

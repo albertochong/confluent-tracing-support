@@ -13,7 +13,6 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 
 public class KafkaTracingProducerInterceptor<K, V> implements ProducerInterceptor<K, V> {
 
-  private String ksqlServiceId;
   private boolean allowKsqlInternalTopics;
   private Map<String, Tracer> tracerMapping;
 
@@ -23,7 +22,7 @@ public class KafkaTracingProducerInterceptor<K, V> implements ProducerIntercepto
     String topic = record.topic();
     Tracer tracer = getTracer(topic);
 
-    if (KafkaTracingUtils.isInternalTopic(topic, ksqlServiceId)) {
+    if (KafkaTracingUtils.isInternalTopic(topic)) {
 
       if (allowKsqlInternalTopics) {
         KafkaTracingUtils.buildAndInjectSpan(record, tracer).finish();
@@ -51,13 +50,6 @@ public class KafkaTracingProducerInterceptor<K, V> implements ProducerIntercepto
 
     String _allowKsqlInternalTopics = System.getenv(KafkaTracingUtils.ALLOW_KSQL_INTERNAL_TOPICS);
     allowKsqlInternalTopics = Boolean.parseBoolean(_allowKsqlInternalTopics);
-    System.out.println("----------------> allowKsqlInternalTopics: " + allowKsqlInternalTopics);
-    ksqlServiceId = (String) configs.get(KafkaTracingUtils.KSQL_SERVICE_ID_PARAM);
-
-    if (ksqlServiceId == null) {
-      ksqlServiceId = KafkaTracingUtils.KSQL_SERVICE_ID_DEFAULT;
-    }
-
     String interceptorsConfigFile = System.getenv(KafkaTracingUtils.INTERCEPTORS_CONFIG_FILE);
 
     if (interceptorsConfigFile != null) {
