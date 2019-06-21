@@ -50,6 +50,7 @@ public class KafkaTracingUtils {
   public static final String FROM_PREFIX = "From_";
 
   public static boolean isInternalTopic(String topic, String ksqlServiceId) {
+    System.out.println("----------> isInternalTopic() Topic:" + topic + ",    Flag: " + CONFLUENT_KSQL_PREFIX + ksqlServiceId);
     return topic.indexOf(CONFLUENT_KSQL_PREFIX + ksqlServiceId) >= 0;
   }
 

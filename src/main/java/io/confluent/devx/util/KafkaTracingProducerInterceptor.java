@@ -51,6 +51,7 @@ public class KafkaTracingProducerInterceptor<K, V> implements ProducerIntercepto
 
     String _allowKsqlInternalTopics = System.getenv(KafkaTracingUtils.ALLOW_KSQL_INTERNAL_TOPICS);
     allowKsqlInternalTopics = Boolean.parseBoolean(_allowKsqlInternalTopics);
+    System.out.println("----------------> allowKsqlInternalTopics: " + allowKsqlInternalTopics);
     ksqlServiceId = (String) configs.get(KafkaTracingUtils.KSQL_SERVICE_ID_PARAM);
 
     if (ksqlServiceId == null) {
