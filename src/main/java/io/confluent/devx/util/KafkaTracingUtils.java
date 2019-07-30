@@ -1,6 +1,7 @@
 package io.confluent.devx.util;
 
 import io.jaegertracing.Configuration;
+import io.jaegertracing.Configuration.CodecConfiguration;
 import io.jaegertracing.Configuration.ReporterConfiguration;
 import io.jaegertracing.Configuration.SamplerConfiguration;
 import io.jaegertracing.internal.reporters.RemoteReporter;
@@ -251,11 +252,7 @@ public class KafkaTracingUtils {
   private static Configuration getConfig(String serviceName, JsonObject configJson) {
 
     if (configJson == null) {
-
-      return new Configuration(serviceName)
-        .withSampler(SamplerConfiguration.fromEnv())
-        .withReporter(ReporterConfiguration.fromEnv());
-
+      return Configuration.fromEnv(serviceName);
     }
 
     SamplerConfiguration samplerConfig = SamplerConfiguration.fromEnv();
@@ -332,7 +329,8 @@ public class KafkaTracingUtils {
 
     return new Configuration(serviceName)
       .withSampler(samplerConfig)
-      .withReporter(reporterConfig);
+      .withReporter(reporterConfig)
+      .withCodec(CodecConfiguration.fromEnv());
 
   }
 
