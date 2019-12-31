@@ -4,7 +4,7 @@ import org.apache.kafka.common.header.Headers;
 
 public class CustomHeadersMapInjectAdapter extends HeadersMapInjectAdapter {
 
-  public CustomHeadersMapInjectAdapter(Headers headers, boolean second) {
+  public CustomHeadersMapInjectAdapter(Headers headers) {
     super(headers);
   }
 

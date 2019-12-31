@@ -4,7 +4,7 @@ Interceptors-based approach to implement distributed tracing in Apache Kafka tec
 ## Requirements
 
 - Java 8+
-- Kafka 2.0.0+
+- Kafka 2.1.0+
 
 ## Overview
 

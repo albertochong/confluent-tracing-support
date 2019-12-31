@@ -48,7 +48,6 @@ public class KafkaTracingProducerInterceptor<K, V> implements ProducerIntercepto
     allowKsqlInternalTopics = Boolean.parseBoolean(_allowKsqlInternalTopics);
 
     Tracer tracer = TracerResolver.resolveTracer();
-    System.out.println("-------------> " + tracer);
     GlobalTracer.registerIfAbsent(tracer);
 
   }
