@@ -1,5 +1,5 @@
-# Apache Kafka Tracing Support for REST Proxy, Connect and KSQL
-Interceptors-based approach to implement distributed tracing in Apache Kafka technologies
+# Confluent Tracing Support for REST Proxy, Connect and KSQL
+Interceptors-based approach to implement distributed tracing in Confluent-based technologies
 
 ## Requirements
 
@@ -25,10 +25,10 @@ bootstrap.servers=localhost:9092
 listeners=http://localhost:8088
 auto.offset.reset=earliest
 
-############################## Jaeger Tracing Configuration ################################
+############################## OpenTracing Configuration ###################################
 
-producer.interceptor.classes=io.confluent.devx.util.KafkaTracingProducerInterceptor
-consumer.interceptor.classes=io.confluent.devx.util.KafkaTracingConsumerInterceptor
+producer.interceptor.classes=io.confluent.devx.util.ConfluentProducerInterceptor
+consumer.interceptor.classes=io.confluent.devx.util.ConfluentConsumerInterceptor
 
 ############################################################################################
 ```

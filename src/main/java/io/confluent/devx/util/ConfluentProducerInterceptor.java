@@ -1,31 +1,26 @@
 package io.confluent.devx.util;
 
 import io.opentracing.Tracer;
+import io.opentracing.contrib.kafka.TracingProducerInterceptor;
 import io.opentracing.contrib.tracerresolver.TracerResolver;
 import io.opentracing.util.GlobalTracer;
 
 import java.util.Map;
 
-import org.apache.kafka.clients.producer.ProducerInterceptor;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
-public class KafkaTracingProducerInterceptor<K, V> implements ProducerInterceptor<K, V> {
-
-  private boolean allowKsqlInternalTopics;
+public class ConfluentProducerInterceptor<K, V> extends TracingProducerInterceptor<K, V> {
 
   @Override
   public ProducerRecord<K, V> onSend(ProducerRecord<K, V> record) {
 
-    String topic = record.topic();
-    Tracer tracer = GlobalTracer.get();
-
-    if (KafkaTracingUtils.isInternalTopic(topic)) {
-      if (allowKsqlInternalTopics) {
-        KafkaTracingUtils.buildAndInjectSpan(record, tracer).finish();
+    if (Utils.isInternalTopic(record.topic())) {
+      if (Utils.allowKsqlInternalTopics()) {
+        super.onSend(record);
       }
     } else {
-      KafkaTracingUtils.buildAndInjectSpan(record, tracer).finish();
+      super.onSend(record);
     }
 
     return record;
@@ -38,18 +33,13 @@ public class KafkaTracingProducerInterceptor<K, V> implements ProducerIntercepto
 
   @Override
   public void close() {
-
   }
 
   @Override
   public void configure(Map<String, ?> configs) {
-
-    String _allowKsqlInternalTopics = System.getenv(KafkaTracingUtils.ALLOW_KSQL_INTERNAL_TOPICS);
-    allowKsqlInternalTopics = Boolean.parseBoolean(_allowKsqlInternalTopics);
-
+    Utils.readAllowKsqlInternalTopics();
     Tracer tracer = TracerResolver.resolveTracer();
     GlobalTracer.registerIfAbsent(tracer);
-
   }
 
 }

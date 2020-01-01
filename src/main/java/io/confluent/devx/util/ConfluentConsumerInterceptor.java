@@ -1,36 +1,30 @@
 package io.confluent.devx.util;
 
 import io.opentracing.Tracer;
+import io.opentracing.contrib.kafka.TracingConsumerInterceptor;
+import io.opentracing.contrib.kafka.TracingKafkaUtils;
 import io.opentracing.contrib.tracerresolver.TracerResolver;
 import io.opentracing.util.GlobalTracer;
 
 import java.util.Map;
-import org.apache.kafka.clients.consumer.ConsumerInterceptor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 
-public class KafkaTracingConsumerInterceptor<K, V> implements ConsumerInterceptor<K, V> {
-
-  private boolean allowKsqlInternalTopics;
+public class ConfluentConsumerInterceptor<K, V> extends TracingConsumerInterceptor<K, V> {
 
   @Override
   public ConsumerRecords<K, V> onConsume(ConsumerRecords<K, V> records) {
 
     for (ConsumerRecord<K, V> record : records) {
-
-      String topic = record.topic();
-      Tracer tracer = GlobalTracer.get();
-
-      if (KafkaTracingUtils.isInternalTopic(topic)) {
-        if (allowKsqlInternalTopics) {
-          KafkaTracingUtils.buildAndFinishChildSpan(record, tracer);
+      if (Utils.isInternalTopic(record.topic())) {
+        if (Utils.allowKsqlInternalTopics()) {
+          TracingKafkaUtils.buildAndFinishChildSpan(record, GlobalTracer.get());
         }
       } else {
-        KafkaTracingUtils.buildAndFinishChildSpan(record, tracer);
+        TracingKafkaUtils.buildAndFinishChildSpan(record, GlobalTracer.get());
       }
-
     }
 
     return records;
@@ -39,24 +33,17 @@ public class KafkaTracingConsumerInterceptor<K, V> implements ConsumerIntercepto
 
   @Override
   public void onCommit(Map<TopicPartition, OffsetAndMetadata> offsets) {
-
   }
 
   @Override
   public void close() {
-
   }
 
   @Override
   public void configure(Map<String, ?> configs) {
-
-    String _allowKsqlInternalTopics = System.getenv(KafkaTracingUtils.ALLOW_KSQL_INTERNAL_TOPICS);
-    allowKsqlInternalTopics = Boolean.parseBoolean(_allowKsqlInternalTopics);
-
+    Utils.readAllowKsqlInternalTopics();
     Tracer tracer = TracerResolver.resolveTracer();
-    System.out.println("-------------> " + tracer);
     GlobalTracer.registerIfAbsent(tracer);
-
   }
 
 }
