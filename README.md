@@ -1,4 +1,4 @@
-# Confluent Tracing Support for REST Proxy, Connect and KSQL
+# OpenTracing Support for REST Proxy, Connect, and KSQL
 Interceptors-based approach to implement distributed tracing in Confluent-based technologies
 
 ## Requirements
